@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link href="css/bootstrap.min.css" rel="stylesheet" />    
+<script src="js/d3.v3.min.js"></script>
+<style type="text/css">
+
+/* On mouse hover, lighten state color */
+path:hover {
+	fill-opacity: .7;
+}
+
+/* Style for Custom Tooltip */
+div.tooltip {   
+ 	position: absolute;           
+	text-align: center;           
+	width: 60px;                  
+	height: 28px;                 
+	padding: 2px;             
+	font: 12px sans-serif;        
+	background: white;   
+	border: 0px;      
+	border-radius: 8px;           
+	pointer-events: none;         
+}
+        
+/* Legend Font Style */
+body {
+	font: 11px sans-serif;
+}
+        
+/* Legend Position Style */
+.legend {
+	position:absolute;
+	left:800px;
+	top:350px;
+}
+h1
+{
+	font-weight:bold;
+	font-size:14px;
+}
+select
+{
+	width:50%;
+	height:25px;
+	font-size: 14px;
+}
+#us_states_graph
+{
+	border:2px solid #cdcdcd;
+	margin-top: 10px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+	<div class="row">
+		<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="margin-top: 20px;">		
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+					<h1>Filter By Gender</h1> <select id="filter_gender_select" >
+						<option value="">All</option>
+						<option value="0">Male</option>
+						<option value="1">Female</option>
+					</select>
+				</div>
+				<div class="col-xs-12 col-sm-12 col-md-3 col-lg-3" >
+					<h1>Filter By Age</h1> <select id="filter_age_select">
+						<option value="" >All</option>
+						<option value="0" >0-10</option>
+						<option value="1" >11-20</option>
+						<option value="2" >21-40</option>
+						<option value="3" >41-60</option>
+						<option value="4" >61-80</option>
+						<option value="5" >&gt; 80</option>
+					</select>
+				</div>
+				<div class="col-xs-12 col-sm-12 col-md-3 col-lg-3" >
+					<h1>Filter By Month</h1> <select id="filter_month_select" >
+						<option value="" >All</option>
+						<option value="Aug" >August</option>
+						<option value="Sep" >September</option>
+					</select>
+				</div>
+				<div class="col-xs-12 col-sm-12 col-md-3 col-lg-3" >
+					<h1>Filter By Month</h1> <select id="filter_month_select" >
+						<option value="" >All</option>
+						<option value="Aug" >August</option>
+						<option value="Sep" >September</option>
+					</select>
+				</div>
+			</div>
+		</div>		
+	</div>
+	<div class="row">
+		<div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+			<div id="us_states_graph">
+				
+			</div>
+		</div>
+	</div>
+	<div class="row">
+	</div>
+</div>
+</body>
+<script type="text/javascript">
+function showstatedata(d)
+{
+	//console.log(d);
+}
+function showtooltip(d)
+{
+	//console.log(d);
+}
+function hidetooltip(d)
+{
+	//console.log(d);
+}
+var states_complete_data={"exports":[],"imports":[]};
+//Width and height of map
+var width = 600;
+var height = 300;
+// D3 Projection
+var projection = d3.geo.albersUsa()
+				   .translate([width/2, height/2])    // translate to center of screen
+				   .scale([600]);          // scale things down so see entire US
+        
+// Define path generator
+var path = d3.geo.path()               // path generator that will convert GeoJSON to SVG paths
+		  	 .projection(projection);  // tell path generator to use albersUsa projection
+//Create SVG element and append map to the SVG
+var svg = d3.select("#us_states_graph")
+			.append("svg")
+			.attr("width", width)
+			.attr("height", height);        
+// Append Div for tooltip to SVG
+var div = d3.select("body")
+		    .append("div")   
+    		.attr("class", "tooltip")               
+    		.style("opacity", 0);
+d3.json("data/US-States.json", function(json) {
+svg.selectAll("path")
+	.data(json.features)
+	.enter()
+	.append("path")
+	.attr("d", path)
+	.style("stroke", "#fff")
+	.style("stroke-width", "1")
+	.style("fill", function(d) {
+		return "rgb(213,222,217)";
+	}).on('click',showstatedata).on('mouseenter',showtooltip).on('mouseleave',hidetooltip);
+});
+d3.csv("data/exstall.csv", function(csv) {
+	csv.forEach(function(data1) {
+			data1.val2013=+data1.val2013;
+			data1.val2014=+data1.val2014;
+			data1.val2015=+data1.val2015;
+			data1.val2016=+data1.val2016;
+			data1.rank=+data1.rank;
+			states_complete_data.exports.push(data1);
+	});
+});
+d3.csv("data/exctyall.csv", function(csv) {
+	csv.forEach(function(data1) {
+		data1.rank=+data1.rank;
+		for(var i=0;i<states_complete_data.exports.length;i++)
+		{
+			if(states_complete_data.exports[i].statename==data1.statename && states_complete_data.exports[i].rank==data1.rank)
+			{
+				if(data1.countryid=='World' && states_complete_data.exports[i].abbrevation=='World')
+				{
+					states_complete_data.exports[i].countryid=data1.countryid;
+					states_complete_data.exports[i].cvalue2013=+data1.val2013;
+					states_complete_data.exports[i].cvalue2014=+data1.val2014;
+					states_complete_data.exports[i].cvalue2015=+data1.val2015;
+					states_complete_data.exports[i].cvalue2016=+data1.val2016;
+					return;
+				}
+				else if(data1.countryid=='Top 25' && states_complete_data.exports[i].abbrevation=='Top 25')
+				{
+					states_complete_data.exports[i].countryid=data1.countryid;
+					states_complete_data.exports[i].cvalue2013=+data1.val2013;
+					states_complete_data.exports[i].cvalue2014=+data1.val2014;
+					states_complete_data.exports[i].cvalue2015=+data1.val2015;
+					states_complete_data.exports[i].cvalue2016=+data1.val2016;
+					return;
+				}
+				else if(data1.countryid!='Top 25' && data1.countryid!='World')
+				{
+					states_complete_data.exports[i].countryid=data1.countryid;
+					states_complete_data.exports[i].cvalue2013=+data1.val2013;
+					states_complete_data.exports[i].cvalue2014=+data1.val2014;
+					states_complete_data.exports[i].cvalue2015=+data1.val2015;
+					states_complete_data.exports[i].cvalue2016=+data1.val2016;
+					return;
+				}
+				
+			}
+		}
+		//states_complete_data.exports.push(newdata);		
+	});
+	console.log(states_complete_data.exports);
+});
+</script>
+</html>
